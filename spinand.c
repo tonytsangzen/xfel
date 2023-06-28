@@ -2,26 +2,7 @@
 
 #define SPINAND_ID(...)	{ .val = { __VA_ARGS__ }, .len = sizeof((uint8_t[]){ __VA_ARGS__ }) }
 
-struct spinand_info_t {
-	char * name;
-	struct {
-		uint8_t val[4];
-		uint8_t len;
-	} id;
-	uint32_t page_size;
-	uint32_t spare_size;
-	uint32_t pages_per_block;
-	uint32_t blocks_per_die;
-	uint32_t planes_per_die;
-	uint32_t ndies;
-};
 
-struct spinand_pdata_t {
-	struct spinand_info_t info;
-	uint32_t swapbuf;
-	uint32_t swaplen;
-	uint32_t cmdlen;
-};
 
 enum {
 	OPCODE_RDID					= 0x9f,
@@ -155,6 +136,9 @@ static const struct spinand_info_t spinand_infos[] = {
 	{ "HYF1GQ4U",        SPINAND_ID(0xc9, 0x51),       2048, 128,  64, 1024, 1, 1 },
 	{ "HYF2GQ4U",        SPINAND_ID(0xc9, 0x52),       2048, 128,  64, 2048, 1, 1 },
 	{ "HYF4GQ4U",        SPINAND_ID(0xc9, 0x54),       2048, 128,  64, 4096, 1, 1 },
+
+    /* foresee */
+	{ "F35SQA001G",        SPINAND_ID(0xcd, 0x71, 0x71), 2048,  64,  64, 1024, 1, 1 },
 };
 
 static inline int spinand_info(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat)
@@ -244,7 +228,7 @@ static inline int spinand_wait_for_busy(struct xfel_ctx_t * ctx, struct spinand_
 	return 0;
 }
 
-static int spinand_helper_init(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat)
+int spinand_helper_init(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat)
 {
 	uint8_t val;
 
@@ -262,7 +246,7 @@ static int spinand_helper_init(struct xfel_ctx_t * ctx, struct spinand_pdata_t *
 	return 0;
 }
 
-static void spinand_helper_read(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat, uint32_t addr, uint8_t * buf, uint32_t count)
+ void spinand_helper_read(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat, uint32_t addr, uint8_t * buf, uint32_t count)
 {
 	uint32_t pa, ca;
 	uint32_t n;
@@ -291,7 +275,7 @@ static void spinand_helper_read(struct xfel_ctx_t * ctx, struct spinand_pdata_t 
 	}
 }
 
-static void spinand_helper_erase(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat, uint64_t addr, uint64_t count)
+ void spinand_helper_erase(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat, uint64_t addr, uint64_t count)
 {
 	uint64_t base;
 	int64_t cnt;
@@ -336,7 +320,7 @@ static void spinand_helper_erase(struct xfel_ctx_t * ctx, struct spinand_pdata_t
 	}
 }
 
-static void spinand_helper_write(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat, uint32_t addr, uint8_t * buf, uint32_t count)
+ void spinand_helper_write(struct xfel_ctx_t * ctx, struct spinand_pdata_t * pdat, uint32_t addr, uint8_t * buf, uint32_t count)
 {
 	uint8_t * cbuf;
 	int32_t clen;

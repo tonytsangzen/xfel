@@ -14,3 +14,8 @@
 /.project
 /.settings
 /xfel
+
+#
+# vscode
+#
+/.vscode
