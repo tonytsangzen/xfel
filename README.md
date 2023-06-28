@@ -37,6 +37,19 @@ usage:
     xfel spinand splwrite <split-size> <address> <file> - Write file to spi nand flash with split support
     xfel extra [...]                                    - The extra commands
 ```
+```shell
+ubi sub command usage:
+    xfel ubi create <partition> <size>                   - create / adjuest ubi partition\r\n");
+    xfel ubi write  <partition> <file>                   - Write image file to ubi partition\r\n");
+    xfel ubi read   <partition> <file>                   - read image from to ubi partition\r\n");
+    xfel ubi erase  <partition>                          - erase ubi partition\r\n");
+```
+
+```shell
+v85x extra command usage:
+    xfel extra spl <file>                                - write spl boot0 to flash
+```
+
 
 ## Links
 
