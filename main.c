@@ -3,7 +3,35 @@
 #include <ecdsa256.h>
 #include <spinor.h>
 #include <spinand.h>
+#include <ubi_cmd.h>
 #include <libusb.h>
+
+static size_t hum2digital(char* param){
+    int multi = 1;
+    char temp[64];
+    char *p = temp;
+    strncpy(temp, param, sizeof(temp));
+    while(*p++ != 0){
+        if(*p >= 0 && *p <= 9)
+            continue;
+        if(*p == 'K' || *p == 'k'){
+            multi = 1024;
+            *p = '\0';
+            break;
+        }
+        if(*p == 'M' || *p == 'm'){
+            multi = 1024*1024;
+            *p = '\0';
+            break;
+        }
+        if(*p == 'G' || *p == 'g'){
+            multi = 1024*1024*1024;
+            *p = '\0';
+            break;
+        }
+    }
+    return strtoul(temp, NULL, 0) * multi;
+}
 
 static uint64_t file_save(const char * filename, void * buf, uint64_t len)
 {
@@ -123,9 +151,11 @@ static void usage(void)
 	printf("    xfel spinand erase <address> <length>               - Erase spi nand flash\r\n");
 	printf("    xfel spinand read <address> <length> <file>         - Read spi nand flash to file\r\n");
 	printf("    xfel spinand write <address> <file>                 - Write file to spi nand flash\r\n");
+	printf("    xfel ubi <command> <agrs...> 	                    - ubi sub command interface\r\n");
 	printf("    xfel spinand splwrite <split-size> <address> <file> - Write file to spi nand flash with split support\r\n");
 	printf("    xfel extra [...]                                    - The extra commands\r\n");
 }
+
 
 int main(int argc, char * argv[])
 {
@@ -191,7 +221,7 @@ int main(int argc, char * argv[])
 		if(argc == 2)
 		{
 			uint32_t addr = strtoul(argv[0], NULL, 0);
-			size_t len = strtoul(argv[1], NULL, 0);
+			size_t len = hum2digital(argv[1]);//strtoul(argv[1], NULL, 0);
 			char * buf = malloc(len);
 			if(buf)
 			{
@@ -210,7 +240,7 @@ int main(int argc, char * argv[])
 		if(argc == 2)
 		{
 			uint32_t addr = strtoul(argv[0], NULL, 0);
-			size_t len = strtoul(argv[1], NULL, 0);
+			size_t len = hum2digital(argv[1]);//strtoul(argv[1], NULL, 0);
 			char * buf = malloc(len);
 			if(buf)
 			{
@@ -254,7 +284,7 @@ int main(int argc, char * argv[])
 		if(argc == 3)
 		{
 			uint32_t addr = strtoul(argv[0], NULL, 0);
-			size_t len = strtoul(argv[1], NULL, 0);
+			size_t len = hum2digital(argv[1]); //strtoul(argv[1], NULL, 0);
 			char * buf = malloc(len);
 			if(buf)
 			{
@@ -411,8 +441,8 @@ int main(int argc, char * argv[])
 			{
 				argc -= 1;
 				argv += 1;
-				uint64_t addr = strtoull(argv[0], NULL, 0);
-				uint64_t len = strtoull(argv[1], NULL, 0);
+				uint64_t addr = hum2digital(argv[0]);
+				uint64_t len = hum2digital(argv[1]);
 				if(!spinor_erase(&ctx, addr, len))
 					printf("Can't erase spi nor flash\r\n");
 			}
@@ -421,7 +451,7 @@ int main(int argc, char * argv[])
 				argc -= 1;
 				argv += 1;
 				uint64_t addr = strtoull(argv[0], NULL, 0);
-				uint64_t len = strtoull(argv[1], NULL, 0);
+				uint64_t len = hum2digital(argv[1]);//strtoull(argv[1], NULL, 0);
 				char * buf = malloc(len);
 				if(buf)
 				{
@@ -436,7 +466,7 @@ int main(int argc, char * argv[])
 			{
 				argc -= 1;
 				argv += 1;
-				uint64_t addr = strtoull(argv[0], NULL, 0);
+				uint64_t addr = hum2digital(argv[0]);
 				uint64_t len;
 				void * buf = file_load(argv[1], &len);
 				if(buf)
@@ -470,8 +500,8 @@ int main(int argc, char * argv[])
 			{
 				argc -= 1;
 				argv += 1;
-				uint64_t addr = strtoull(argv[0], NULL, 0);
-				uint64_t len = strtoull(argv[1], NULL, 0);
+				uint64_t addr = hum2digital(argv[0]);
+				uint64_t len = hum2digital(argv[1]);
 				if(!spinand_erase(&ctx, addr, len))
 					printf("Can't erase spi nand flash\r\n");
 			}
@@ -480,7 +510,7 @@ int main(int argc, char * argv[])
 				argc -= 1;
 				argv += 1;
 				uint64_t addr = strtoull(argv[0], NULL, 0);
-				uint64_t len = strtoull(argv[1], NULL, 0);
+				uint64_t len = hum2digital(argv[1]);
 				char * buf = malloc(len);
 				if(buf)
 				{
@@ -495,7 +525,7 @@ int main(int argc, char * argv[])
 			{
 				argc -= 1;
 				argv += 1;
-				uint64_t addr = strtoull(argv[0], NULL, 0);
+				uint64_t addr = hum2digital(argv[0]);
 				uint64_t len;
 				void * buf = file_load(argv[1], &len);
 				if(buf)
@@ -509,8 +539,8 @@ int main(int argc, char * argv[])
 			{
 				argc -= 1;
 				argv += 1;
-				uint32_t splitsz = strtoul(argv[0], NULL, 0);
-				uint64_t addr = strtoull(argv[1], NULL, 0);
+				uint32_t splitsz = hum2digital(argv[0]);
+				uint64_t addr = hum2digital(argv[1]);
 				uint64_t len;
 				void * buf = file_load(argv[2], &len);
 				if(buf)
@@ -530,6 +560,12 @@ int main(int argc, char * argv[])
 		argv += 2;
 		if(!fel_chip_extra(&ctx, argc, argv))
 			printf("Not support any extra commands\r\n");
+	}
+	else if(!strcmp(argv[1], "ubi")){
+		argc -=2;
+		argv +=2;
+		if(!sub_ubi_cmd(&ctx, argc, argv))
+			printf("faild\r\n");	
 	}
 	else
 		usage();
